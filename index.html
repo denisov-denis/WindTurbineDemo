@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Wind Turbine Simulator</title>
+    <style>
+        html, body {
+            margin: 0;
+            height: 100%;
+            overflow: hidden;
+            background: #0b1422;
+            font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+            color: #e2e8ee;
+        }
+
+        #unity-canvas {
+            display: block;
+            touch-action: none; /* gestures drive the camera instead of scrolling or zooming the page */
+            width: 100%;
+            height: 100%;
+            outline: none;
+            background: #0b1422;
+        }
+
+        #loading {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            background: #0b1422;
+            transition: opacity 0.4s;
+        }
+
+        #loading h1 {
+            margin: 0;
+            font-size: 22px;
+            font-weight: 600;
+        }
+
+        #progress {
+            width: 280px;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.1);
+            overflow: hidden;
+        }
+
+        #progress-fill {
+            width: 0;
+            height: 100%;
+            background: #5ca6ff;
+            transition: width 0.2s;
+        }
+
+        #status {
+            font-size: 13px;
+            color: #8292a2;
+        }
+
+        #status.error {
+            max-width: 480px;
+            text-align: center;
+            color: #ff6b5f;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="unity-canvas" tabindex="-1"></canvas>
+    <div id="loading">
+        <h1>Wind Turbine Simulator</h1>
+        <div id="progress"><div id="progress-fill"></div></div>
+        <div id="status">Loading…</div>
+    </div>
+
+    <script>
+        var buildUrl = "Build";
+        var config = {
+            dataUrl: buildUrl + "/WebGL.data",
+            frameworkUrl: buildUrl + "/WebGL.framework.js",
+            codeUrl: buildUrl + "/WebGL.wasm",
+            streamingAssetsUrl: "StreamingAssets",
+            companyName: "Denis Denisov",
+            productName: "Wind Turbine Simulator",
+            productVersion: "0.1.0",
+            // Rendering at full Retina/4K resolution is the biggest cost on mid-range laptops; 1.5 looks nearly as sharp.
+            devicePixelRatio: Math.min(window.devicePixelRatio || 1, 1.5),
+        };
+
+        var canvas = document.getElementById("unity-canvas");
+        var loading = document.getElementById("loading");
+        var fill = document.getElementById("progress-fill");
+        var status = document.getElementById("status");
+
+        function showError(message) {
+            status.textContent = message;
+            status.className = "error";
+        }
+
+        var script = document.createElement("script");
+        script.src = buildUrl + "/WebGL.loader.js";
+        script.onload = function () {
+            createUnityInstance(canvas, config, function (progress) {
+                fill.style.width = Math.round(progress * 100) + "%";
+            }).then(function () {
+                loading.style.opacity = "0";
+                setTimeout(function () { loading.remove(); }, 400);
+                canvas.focus();
+            }).catch(function (error) {
+                showError("Could not start the simulator: " + error + ". A browser with WebGL 2 support is required.");
+            });
+        };
+        script.onerror = function () { showError("Failed to load the application files."); };
+        document.body.appendChild(script);
+    </script>
+</body>
+</html>
